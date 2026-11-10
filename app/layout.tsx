@@ -1,24 +1,15 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Gowun_Batang } from "next/font/google";
+import { Fraunces } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
-// 제목은 세리프(영문 Cormorant Garamond, 한글 Gowun Batang), 본문은 Pretendard.
+// 한글·본문은 Pretendard 하나, 영문 제목 「Archive」와 숫자만 Fraunces.
 // 글꼴 파일은 빌드할 때 프로젝트에 담겨 우리 서버가 직접 내려 준다 (방문자가 구글에 접속하지 않음).
-const cormorant = Cormorant_Garamond({
-  weight: ["500", "600"],
-  style: ["normal", "italic"],
+const fraunces = Fraunces({
+  weight: ["500"],
   subsets: ["latin"],
-  variable: "--font-cormorant",
+  variable: "--font-fraunces",
   display: "swap",
-});
-
-const gowun = Gowun_Batang({
-  weight: ["400", "700"],
-  subsets: ["latin"],
-  variable: "--font-gowun",
-  display: "swap",
-  preload: false, // 한글 글자는 필요한 부분만 내려받는다
 });
 
 const pretendard = localFont({
@@ -37,7 +28,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ko" className={`${cormorant.variable} ${gowun.variable} ${pretendard.variable} h-full antialiased`}>
+    <html lang="ko" className={`${fraunces.variable} ${pretendard.variable} h-full antialiased`}>
       <body className="min-h-full">{children}</body>
     </html>
   );

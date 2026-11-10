@@ -1,6 +1,6 @@
 // 첫 화면 모양. (가짜 데이터로도 그려 볼 수 있게 page.tsx와 따로 둔다)
 import type { Shelf } from "@/lib/shelf";
-import { KINDS, UNITS } from "@/lib/transform";
+import { KINDS } from "@/lib/transform";
 import { Fragment } from "react";
 import { Bookshelf } from "./bookshelf";
 
@@ -14,33 +14,27 @@ const NOTICE = {
 } as const;
 
 export function ShelfPage({ shelf }: { shelf: Shelf }) {
-  // 올해 기록이 있는 종류만 문장에 넣는다
+  // 올해 기록이 있는 종류만 한 줄에 적는다
   const parts = shelf.ok ? KINDS.filter((k) => shelf.count[k] > 0) : [];
 
   return (
-    <main className="mx-auto w-full max-w-[1120px] px-4 pt-8 pb-20 sm:px-8 sm:pt-14">
-      <header className="mb-10 text-center sm:mb-14">
-        <h1 className="font-display text-[68px] leading-[0.9] font-medium tracking-tight sm:text-[124px]">
+    <main className="mx-auto w-full max-w-[1040px] px-5 pt-12 pb-20 sm:px-10 sm:pt-16">
+      <header>
+        <h1 className="font-title text-[52px] leading-none font-medium tracking-[-0.02em] sm:text-[64px]">
           {SITE_TITLE}
+          <span className="text-olive">.</span>
         </h1>
-        <p className="mt-3 text-xs font-semibold tracking-[0.4em] text-ink sm:text-sm">
-          읽고 · 보고 · 듣고 · 다녀온 것들
-        </p>
-
+        <p className="mt-3 text-[15px] text-ink-soft sm:text-base">읽고, 보고, 듣고, 다녀온 것들</p>
         {shelf.ok && (
-          <p className="mx-auto mt-8 max-w-[720px] font-serif text-[21px] leading-relaxed break-keep sm:mt-10 sm:text-[28px]">
-            <span className="text-coral">{shelf.year}년,</span>{" "}
+          <p className="mt-6 text-[15px] leading-relaxed text-[#333] sm:mt-7 sm:text-base">
+            {shelf.year}년
             {parts.length === 0
-              ? "아직 올해 기록이 없어요."
-              : parts.map((k, i) => (
+              ? " · 아직 올해 기록이 없어요"
+              : parts.map((k) => (
                   <Fragment key={k}>
-                    {i > 0 && <span className="text-ink-soft"> · </span>}
+                    {" · "}
                     <span className="whitespace-nowrap">
-                      {k}{" "}
-                      <span className="highlight font-bold">
-                        {shelf.count[k]}
-                        {UNITS[k]}
-                      </span>
+                      {k} <b className="font-bold text-olive">{shelf.count[k]}</b>
                     </span>
                   </Fragment>
                 ))}
@@ -51,10 +45,10 @@ export function ShelfPage({ shelf }: { shelf: Shelf }) {
       {shelf.ok ? (
         <Bookshelf items={shelf.items} />
       ) : (
-        <p className="rounded-lg bg-stone px-6 py-10 text-center font-serif">{NOTICE[shelf.reason]}</p>
+        <p className="mt-10 rounded-lg bg-card px-6 py-10 text-center">{NOTICE[shelf.reason]}</p>
       )}
 
-      <footer className="mt-16 border-t border-line pt-6 text-center font-serif text-sm text-ink-soft">
+      <footer className="mt-20 border-t border-line pt-6 text-center text-[13px] text-ink-soft">
         노션에 적은 기록 중 공개로 체크한 것만 보여요
       </footer>
     </main>

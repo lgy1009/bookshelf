@@ -11,23 +11,6 @@ const RATINGS: { label: string; min: number }[] = [
   { label: "★ 4 이상", min: 4 },
   { label: "★ 3 이상", min: 3 },
 ];
-const EN: Record<Kind, string> = { 책: "a book", 영화: "a film", 노래: "a song", 공연: "a show", 전시: "an exhibition" };
-const EN_UPPER: Record<Kind, string> = { 책: "BOOK", 영화: "FILM", 노래: "SONG", 공연: "SHOW", 전시: "EXHIBITION" };
-
-// 표지 사진이 없을 때 쓰는 색 표지 (바탕 / 글자)
-const PLAIN_COVERS = [
-  "bg-ink text-lemon",
-  "bg-lemon text-ink",
-  "bg-coral text-white",
-  "bg-stone text-ink",
-  "bg-moss text-lemon",
-];
-
-function plainCover(key: string): string {
-  let n = 0;
-  for (const ch of key) n = (n * 31 + ch.charCodeAt(0)) % 997;
-  return PLAIN_COVERS[n % PLAIN_COVERS.length];
-}
 
 function stars(rating: number): string {
   return "★".repeat(rating) + "☆".repeat(5 - rating);
@@ -66,49 +49,50 @@ export function Bookshelf({ items }: { items: ShelfItem[] }) {
 
   return (
     <>
-      <section aria-label="골라 보기" className="mb-8 border-y border-line py-3">
-        <FilterRow label="종류">
+      <section
+        aria-label="골라 보기"
+        className="mt-9 flex flex-col gap-1 border-y border-line py-2 sm:mt-10 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div role="group" aria-label="종류" className="-mx-1 flex gap-5 overflow-x-auto px-1">
           {KIND_FILTERS.map((k) => (
-            <button key={k} type="button" className="paren" aria-pressed={kind === k} onClick={() => setKind(k)}>
+            <button key={k} type="button" className="tab" aria-pressed={kind === k} onClick={() => setKind(k)}>
               {k}
             </button>
           ))}
-        </FilterRow>
-        <FilterRow label="별점">
-          {RATINGS.map((r) => (
-            <button
-              key={r.label}
-              type="button"
-              className="paren"
-              aria-pressed={minRating === r.min}
-              onClick={() => setMinRating(r.min)}
-            >
-              {r.label}
-            </button>
-          ))}
-        </FilterRow>
-        <FilterRow label="연도">
-          {["전체", ...years].map((y) => (
-            <button key={y} type="button" className="paren" aria-pressed={year === y} onClick={() => setYear(y)}>
-              {y}
-            </button>
-          ))}
-        </FilterRow>
+        </div>
+        <div className="flex items-center gap-4 text-sm text-ink-soft">
+          <label className="flex items-center gap-1">
+            별점
+            <select className="pick" value={minRating} onChange={(e) => setMinRating(Number(e.target.value))}>
+              {RATINGS.map((r) => (
+                <option key={r.min} value={r.min}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-1">
+            연도
+            <select className="pick" value={year} onChange={(e) => setYear(e.target.value)}>
+              <option value="전체">모든 해</option>
+              {years.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </section>
 
-      <div className="mb-4 flex items-baseline justify-between">
-        <h2 className="font-serif text-xl font-bold sm:text-2xl">기록</h2>
-        <p className="text-sm text-ink-soft" aria-live="polite">
-          {cards.length}개
-        </p>
-      </div>
+      <p className="mt-6 text-[13px] text-ink-soft" aria-live="polite">
+        {cards.length}개
+      </p>
 
       {cards.length === 0 ? (
-        <p className="rounded-lg bg-stone-soft py-20 text-center font-serif text-ink-soft">
-          고른 조건에 맞는 기록이 없어요
-        </p>
+        <p className="mt-3 rounded-lg bg-card py-20 text-center text-ink-soft">고른 조건에 맞는 기록이 없어요</p>
       ) : (
-        <ul className="grid grid-cols-3 gap-x-3 gap-y-7 sm:grid-cols-4 sm:gap-x-5 md:grid-cols-5 lg:grid-cols-6">
+        <ul className="mt-3 grid grid-cols-3 gap-x-3 gap-y-8 sm:grid-cols-4 sm:gap-x-5 md:grid-cols-5 lg:grid-cols-6">
           {cards.map((card) => (
             <li key={card.key}>
               <CardButton card={card} onOpen={() => openCard(card)} />
@@ -124,7 +108,7 @@ export function Bookshelf({ items }: { items: ShelfItem[] }) {
           if (e.target === e.currentTarget) dialogRef.current?.close(); // 바깥(어두운 곳)을 누르면 닫기
         }}
         aria-label={open ? `「${open.title}」 감상` : "감상"}
-        className="m-auto max-h-[88vh] w-[min(92vw,580px)] rounded-xl bg-paper p-0 text-ink backdrop:bg-ink/60"
+        className="m-auto max-h-[88vh] w-[min(92vw,560px)] rounded-xl bg-paper p-0 text-ink backdrop:bg-black/40"
       >
         {open && <Detail key={open.key} card={open} onClose={() => dialogRef.current?.close()} />}
       </dialog>
@@ -132,44 +116,41 @@ export function Bookshelf({ items }: { items: ShelfItem[] }) {
   );
 }
 
-function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
+// 표지 자리: 2:3 칸. 노래는 정사각형 표지를 칸 아래쪽에 앉히고, 앨범이면 뒤로 LP가 나온다.
+function CoverSlot({ card, big = false }: { card: Card; big?: boolean }) {
+  const square = card.kind === "노래";
   return (
-    <div role="group" aria-label={label} className="flex flex-wrap items-center gap-x-1 gap-y-0.5 py-0.5">
-      <span className="w-12 shrink-0 text-xs font-semibold tracking-[0.2em] text-ink-soft">{label}</span>
-      {children}
-    </div>
+    <span className={`relative flex aspect-[2/3] items-end ${big ? "w-[150px] sm:w-[170px]" : "w-full"}`}>
+      {card.isAlbum && <span aria-hidden className="vinyl" />}
+      <span
+        className={`relative z-[1] block overflow-hidden rounded-md ${square ? "aspect-square w-[86%] bg-card-2" : "aspect-[2/3] w-full bg-card"}`}
+      >
+        <Cover card={card} />
+      </span>
+    </span>
   );
 }
 
-// 목록의 카드 한 장: 표지 + 제목 + 만든 사람 + 연도·별점
+// 목록의 카드 한 장
 function CardButton({ card, onOpen }: { card: Card; onOpen: () => void }) {
   const rating = card.isAlbum ? averageRating(card.items) : card.items[0].rating;
+  const kindLabel = card.isAlbum ? `앨범 · ${card.items.length}곡` : card.kind;
   return (
     <button
       type="button"
-      className="cover-btn block w-full text-left"
+      className="card-btn block w-full text-left"
       onClick={onOpen}
       aria-label={`${card.isAlbum ? "앨범" : card.kind} 「${card.title}」 감상 보기`}
     >
-      {/* 노래(정사각형 표지)도 2:3 칸의 아래쪽에 앉혀서, 한 줄의 제목 높이가 맞게 한다 */}
-      <span className="flex aspect-[2/3] w-full items-end">
-        <span className={`cover ${card.kind === "노래" ? "aspect-square" : ""}`}>
-          <Cover card={card} />
-          <span
-            aria-hidden
-            className="absolute top-1.5 left-1.5 rounded-[3px] bg-ink/85 px-1.5 py-0.5 text-[11px] font-semibold text-white"
-          >
-            {card.isAlbum ? `앨범 · ${card.items.length}곡` : card.kind}
-          </span>
-        </span>
+      <CoverSlot card={card} />
+      <span className="mt-3 block truncate text-[14px] font-bold sm:text-[15px]">{card.title}</span>
+      <span className="mt-0.5 block truncate text-[12px] text-ink-soft sm:text-[13px]">
+        {kindLabel}
+        {card.creator && ` · ${card.creator}`}
       </span>
-      <span className="mt-2 block truncate text-[14px] font-semibold sm:text-[15px]">{card.title}</span>
-      {card.creator && <span className="block truncate text-[12px] text-ink-soft sm:text-[13px]">{card.creator}</span>}
-      <span className="mt-0.5 block text-[12px] text-ink-soft sm:text-[13px]">
+      <span className="mt-1 block text-[12px] text-ink-soft sm:text-[13px]">
         {card.date ? card.date.slice(0, 4) : "날짜 없음"}
-        {rating !== null && (
-          <span className="ml-1.5 font-semibold text-coral">★ {rating.toFixed(1)}</span>
-        )}
+        {rating !== null && <b className="font-bold text-olive"> · ★ {rating.toFixed(1)}</b>}
       </span>
     </button>
   );
@@ -179,18 +160,16 @@ function CardButton({ card, onOpen }: { card: Card; onOpen: () => void }) {
 function Detail({ card, onClose }: { card: Card; onClose: () => void }) {
   const it = card.items[0];
   return (
-    <div className="flex flex-col gap-5 p-6 sm:flex-row sm:p-7">
-      <div
-        className={`cover shrink-0 self-center sm:self-start ${card.kind === "노래" ? "aspect-square w-[160px] sm:w-[180px]" : "w-[140px] sm:w-[170px]"}`}
-      >
-        <Cover card={card} />
+    <div className="flex flex-col gap-6 p-6 sm:flex-row sm:p-7">
+      <div className="shrink-0 self-center sm:self-start">
+        <CoverSlot card={card} big />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-2.5">
-        <p className="text-xs font-semibold tracking-[0.2em] text-ink-soft">
-          {card.isAlbum ? "ALBUM" : EN_UPPER[card.kind]}
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <p className="text-[13px] text-ink-soft">
+          {card.isAlbum ? `앨범 · ${card.items.length}곡` : card.kind}
           {!card.isAlbum && it.date && ` · ${dotted(it.date)}`}
         </p>
-        <h2 className="font-serif text-2xl leading-snug font-bold break-keep">{card.title}</h2>
+        <h2 className="text-[22px] leading-snug font-bold break-keep">{card.title}</h2>
         {(card.creator || (!card.isAlbum && it.album)) && (
           <p className="text-sm text-ink-soft">
             {card.creator}
@@ -199,18 +178,14 @@ function Detail({ card, onClose }: { card: Card; onClose: () => void }) {
         )}
 
         {card.isAlbum ? (
-          <ol className="mt-1 flex flex-col gap-2.5">
+          <ol className="mt-2 flex flex-col gap-2">
             {card.items.map((song) => (
-              <li key={song.id} className="rounded-lg bg-stone px-4 py-3">
+              <li key={song.id} className="rounded-lg bg-card px-4 py-3">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                  <span className="font-semibold">{song.title}</span>
-                  {song.rating && <span className="text-sm tracking-[0.1em] text-coral">{stars(song.rating)}</span>}
+                  <span className="font-bold">{song.title}</span>
+                  {song.rating && <span className="text-sm tracking-[0.1em] text-olive">{stars(song.rating)}</span>}
                 </div>
-                {song.review && (
-                  <p className="mt-1.5 font-serif leading-relaxed break-keep whitespace-pre-line">
-                    <span className="highlight">{song.review}</span>
-                  </p>
-                )}
+                {song.review && <p className="mt-1.5 leading-relaxed break-keep whitespace-pre-line">{song.review}</p>}
                 <p className="mt-1 text-xs text-ink-soft">
                   {song.date ? dotted(song.date) : "날짜 없음"}
                   {song.withWhom && ` · with ${song.withWhom}`}
@@ -221,40 +196,32 @@ function Detail({ card, onClose }: { card: Card; onClose: () => void }) {
         ) : (
           <>
             <p
-              className="text-lg tracking-[0.15em] text-coral"
+              className="text-lg tracking-[0.12em] text-olive"
               aria-label={it.rating ? `별점 ${it.rating}점` : "별점 없음"}
             >
               {it.rating ? stars(it.rating) : <span className="text-sm tracking-normal text-ink-soft">별점 없음</span>}
             </p>
-            {it.withWhom && (
-              <p className="text-sm">
-                <span className="font-display text-base italic">with</span> {it.withWhom}
-              </p>
-            )}
-            <blockquote className="mt-1 rounded-lg bg-stone px-4 py-3.5 font-serif leading-relaxed break-keep whitespace-pre-line">
-              {it.review ? (
-                <span className="highlight">{it.review}</span>
-              ) : (
-                <span className="text-ink-soft">남긴 감상이 없어요.</span>
-              )}
-            </blockquote>
+            {it.withWhom && <p className="text-sm text-ink-soft">with {it.withWhom}</p>}
+            <p className="mt-2 rounded-lg bg-card px-4 py-3.5 leading-relaxed break-keep whitespace-pre-line">
+              {it.review || <span className="text-ink-soft">남긴 감상이 없어요.</span>}
+            </p>
           </>
         )}
 
         <button
           type="button"
-          className="close-btn mt-2 self-end font-display text-lg font-medium"
+          className="close-btn mt-3 self-end text-sm font-semibold text-ink-soft hover:text-ink"
           onClick={onClose}
           autoFocus
         >
-          ( Close )
+          닫기 ✕
         </button>
       </div>
     </div>
   );
 }
 
-// 표지 사진이 있으면 사진, 없거나 못 불러오면 색 표지에 제목
+// 표지 사진이 있으면 사진, 없거나 못 불러오면 회색 칸에 제목
 function Cover({ card }: { card: Card }) {
   const [broken, setBroken] = useState(false);
   if (card.coverId && !broken) {
@@ -272,11 +239,8 @@ function Cover({ card }: { card: Card }) {
     );
   }
   return (
-    <span className={`absolute inset-0 flex flex-col justify-between p-3 ${plainCover(card.key)}`}>
-      <span aria-hidden className="pt-5 font-display text-sm italic opacity-80">
-        {card.isAlbum ? "an album" : EN[card.kind]}
-      </span>
-      <span className="line-clamp-4 font-serif text-[14px] leading-snug font-bold break-keep sm:text-[16px]">
+    <span className="absolute inset-0 flex items-end p-2.5 sm:p-3">
+      <span className="line-clamp-3 text-[12px] leading-snug font-bold break-keep text-[#222] sm:text-[14px]">
         {card.title}
       </span>
     </span>
