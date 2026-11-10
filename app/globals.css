@@ -1,92 +1,71 @@
 @import "tailwindcss";
 
-/* 귀엽고 레트로한 책장 색 (DESIGN §6) */
+/* 숲 초록 + 따뜻한 회색 + 레몬 형광펜 + 산호색 포인트 (DESIGN §6) */
 @theme {
-  --color-cream: #fdf3e1;
-  --color-wall: #f6dfba;
-  --color-ink: #4a2f22;
-  --color-ink-soft: #7a5a48;
-  --color-wood: #b06a35;
-  --color-wood-dark: #6e3d1c;
-  --color-tomato: #e85d4a;
-  --color-mustard: #f2b53c;
-  --color-mint: #6cc4a4;
-  --color-sky: #6aa9e0;
-  --color-plum: #a77fc9;
+  --color-paper: #fbfaf7;
+  --color-stone: #ebeae5;
+  --color-stone-soft: #f4f3ef;
+  --color-ink: #133e35;
+  --color-ink-soft: #66756f;
+  --color-line: #d9d7cf;
+  --color-lemon: #fceea3;
+  --color-coral: #f0643f;
+  --color-moss: #2f5d50;
 }
 
 @theme inline {
-  --font-pixel: var(--font-galmuri), "Malgun Gothic", sans-serif;
+  --font-display: var(--font-cormorant), var(--font-gowun), serif;
+  --font-serif: var(--font-gowun), serif;
   --font-body: var(--font-pretendard), "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 }
 
 body {
-  background-color: var(--color-cream);
-  /* 옅은 점무늬 종이 */
-  background-image: radial-gradient(rgba(74, 47, 34, 0.09) 1.2px, transparent 1.2px);
-  background-size: 18px 18px;
+  background-color: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-body);
 }
 
 @layer components {
-  /* 레트로 스티커: 굵은 테두리 + 딱딱한 그림자 */
-  .sticker {
-    @apply rounded-xl border-[2.5px] border-ink bg-white shadow-[3px_3px_0_var(--color-ink)];
-  }
-  .chip {
-    @apply inline-flex min-h-10 cursor-pointer items-center gap-1 rounded-full border-2 border-ink bg-white px-3.5 font-pixel text-sm shadow-[2px_2px_0_var(--color-ink)] transition-transform select-none;
-  }
-  .chip[aria-pressed="true"] {
-    @apply bg-mustard;
-  }
-  .chip:active {
-    @apply translate-x-[2px] translate-y-[2px] shadow-none;
-  }
-  .chip:focus-visible,
-  .book:focus-visible {
-    @apply outline-[3px] outline-offset-2 outline-tomato;
+  /* 레몬 형광펜 (글자 아래쪽 절반만 칠한다) */
+  .highlight {
+    background: linear-gradient(transparent 52%, var(--color-lemon) 52%, var(--color-lemon) 92%, transparent 92%);
+    padding: 0 0.1em;
   }
 
-  /* 책장: 한 줄(--row)마다 아래쪽에 나무 선반을 그린다. 줄 사이 간격(row-gap)은 0이어야 선반과 맞는다. */
-  .shelf {
-    --row: 176px;
-    --board: 14px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
-    grid-auto-rows: var(--row);
-    column-gap: 10px;
-    row-gap: 0;
-    background-image: repeating-linear-gradient(
-      to bottom,
-      transparent 0,
-      transparent calc(var(--row) - var(--board)),
-      var(--color-wood) calc(var(--row) - var(--board)),
-      var(--color-wood) calc(var(--row) - 5px),
-      var(--color-wood-dark) calc(var(--row) - 5px),
-      var(--color-wood-dark) var(--row)
-    );
+  /* 괄호 버튼: ( 전체 ) */
+  .paren {
+    @apply inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full px-1.5 font-serif text-[15px] text-ink-soft transition-colors select-none hover:text-ink;
   }
-  @media (min-width: 640px) {
-    .shelf {
-      --row: 206px;
-      grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
-      column-gap: 14px;
-    }
+  .paren::before {
+    content: "(";
+    @apply font-display text-xl font-medium opacity-0 transition-opacity;
   }
-  .shelf-cell {
-    @apply flex items-end justify-center;
-    padding-bottom: var(--board);
+  .paren::after {
+    content: ")";
+    @apply font-display text-xl font-medium opacity-0 transition-opacity;
+  }
+  .paren[aria-pressed="true"] {
+    @apply font-bold text-ink;
+  }
+  .paren[aria-pressed="true"]::before,
+  .paren[aria-pressed="true"]::after {
+    @apply opacity-100;
   }
 
-  /* 표지 한 권 (2:3) */
-  .book {
-    @apply relative block h-[130px] w-[87px] cursor-pointer rounded-[4px] border-[2.5px] border-ink transition-transform sm:h-[156px] sm:w-[104px];
-    box-shadow:
-      inset 6px 0 0 rgba(0, 0, 0, 0.18),
-      2px 0 0 var(--color-ink);
+  .paren:focus-visible,
+  .cover-btn:focus-visible,
+  .close-btn:focus-visible {
+    @apply outline-2 outline-offset-4 outline-coral;
   }
-  .book:hover {
-    @apply -translate-y-1.5 -rotate-1;
+
+  /* 표지 (2:3, 둥근 모서리, 그림자 없음) */
+  .cover {
+    @apply relative block aspect-[2/3] w-full overflow-hidden rounded-md bg-stone;
+  }
+  .cover-btn .cover img {
+    @apply transition-transform duration-500;
+  }
+  .cover-btn:hover .cover img {
+    @apply scale-[1.04];
   }
 }
