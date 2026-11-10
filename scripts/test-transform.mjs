@@ -1,9 +1,9 @@
 // 가짜 노션 데이터로 transform.ts 규칙을 시험한다. 실행: npm.cmd run test:transform
 import assert from "node:assert/strict";
-import { countYear, ratingOf, seoulYear, toShelfItems } from "../lib/transform.ts";
+import { averageRating, countYear, ratingOf, seoulYear, toCards, toShelfItems } from "../lib/transform.ts";
 
 const t = (s) => [{ plain_text: s }];
-function page(id, { title = "제목", kind = "책", rating = 4, review = "", date = "2026-05-01", files = 0, pub = true } = {}) {
+function page(id, { title = "제목", kind = "책", rating = 4, review = "", date = "2026-05-01", files = 0, pub = true, creator = "", album = "", withWhom = "" } = {}) {
   return {
     id,
     properties: {
@@ -11,7 +11,10 @@ function page(id, { title = "제목", kind = "책", rating = 4, review = "", dat
       종류: { select: kind === null ? null : { name: kind } },
       별점: { number: rating },
       "한 줄 감상": { rich_text: review ? t(review) : [] },
-      "다 본 날": { date: date ? { start: date } : null },
+      날짜: { date: date ? { start: date } : null },
+      "만든 사람": { rich_text: creator ? t(creator) : [] },
+      앨범: { rich_text: album ? t(album) : [] },
+      "함께한 사람": { rich_text: withWhom ? t(withWhom) : [] },
       "표지 사진": { files: Array.from({ length: files }, () => ({ type: "file", file: { url: "https://x" } })) },
       공개: { checkbox: pub },
     },
@@ -49,6 +52,7 @@ check("책", () => assert.equal(one({ kind: "책" }).kind, "책"));
 check("영화", () => assert.equal(one({ kind: "영화" }).kind, "영화"));
 check("종류 앞뒤 공백", () => assert.equal(one({ kind: " 영화 " }).kind, "영화"));
 check("종류 없음은 빠진다", () => assert.equal(one({ kind: null }), undefined));
+check("노래·공연·전시", () => assert.deepEqual(["노래", "공연", "전시"].map((k) => one({ kind: k }).kind), ["노래", "공연", "전시"]));
 check("다른 종류(드라마)는 빠진다", () => assert.equal(one({ kind: "드라마" }), undefined));
 
 // 별점
@@ -72,10 +76,10 @@ check("이모지가 반으로 안 잘린다", () => assert.ok(!one({ review: "�
 check("감상 없음은 빈 문자열", () => assert.equal(one({ review: "" }).review, ""));
 
 // 날짜·표지
-check("날짜 YYYY-MM-DD", () => assert.equal(one({ date: "2026-03-04" }).finished, "2026-03-04"));
-check("날짜+시간은 날짜만", () => assert.equal(one({ date: "2026-03-04T10:00:00.000+09:00" }).finished, "2026-03-04"));
-check("날짜 없음", () => assert.equal(one({ date: null }).finished, null));
-check("이상한 날짜", () => assert.equal(one({ date: "어제" }).finished, null));
+check("날짜 YYYY-MM-DD", () => assert.equal(one({ date: "2026-03-04" }).date, "2026-03-04"));
+check("날짜+시간은 날짜만", () => assert.equal(one({ date: "2026-03-04T10:00:00.000+09:00" }).date, "2026-03-04"));
+check("날짜 없음", () => assert.equal(one({ date: null }).date, null));
+check("이상한 날짜", () => assert.equal(one({ date: "어제" }).date, null));
 check("표지 있음", () => assert.equal(one({ files: 2 }).hasCover, true));
 check("표지 없음", () => assert.equal(one({ files: 0 }).hasCover, false));
 check("사진 주소는 넘기지 않는다", () => assert.ok(!JSON.stringify(one({ files: 1 })).includes("https://")));
@@ -98,8 +102,35 @@ const mix = toShelfItems([
   page("m2", { kind: "영화", date: null }),
   page("m3", { kind: "영화", date: "2026-07-01", pub: false }),
 ]);
-check("올해 숫자 (비공개·작년·날짜 없음 제외)", () => assert.deepEqual(countYear(mix, 2026), { books: 2, movies: 1 }));
-check("다른 해", () => assert.deepEqual(countYear(mix, 2025), { books: 1, movies: 0 }));
+check("올해 숫자 (비공개·작년·날짜 없음 제외)", () => assert.deepEqual(countYear(mix, 2026), { 책: 2, 영화: 1, 노래: 0, 공연: 0, 전시: 0 }));
+check("다른 해", () => assert.deepEqual(countYear(mix, 2025), { 책: 1, 영화: 0, 노래: 0, 공연: 0, 전시: 0 }));
+
+// 새 칸
+check("만든 사람·함께한 사람", () => { const x = one({ creator: " 한강 ", withWhom: "친구" }); assert.equal(x.creator, "한강"); assert.equal(x.withWhom, "친구"); });
+check("앨범 칸은 노래일 때만", () => assert.equal(one({ kind: "책", album: "앨범" }).album, ""));
+
+// 앨범 묶기
+const songs = toShelfItems([
+  page("s1", { kind: "노래", title: "곡1", album: "A", creator: "가수", date: "2026-03-01", rating: 5 }),
+  page("s2", { kind: "노래", title: "곡2", album: "A", creator: "가수", date: "2026-05-01", rating: 4, files: 1 }),
+  page("s3", { kind: "노래", title: "곡3", album: "a", creator: "가수", date: "2026-01-01", rating: null }),
+  page("s4", { kind: "노래", title: "곡4", album: "A", creator: "다른 가수", date: "2026-04-01" }),
+  page("s5", { kind: "노래", title: "싱글", album: "", creator: "가수", date: "2026-06-01" }),
+  page("s6", { kind: "노래", title: "싱글2", album: "", creator: "가수", date: "2026-02-01" }),
+  page("b1", { kind: "책", title: "책", album: "A", creator: "가수", date: "2026-04-15" }),
+]);
+const cards = toCards(songs);
+const albumA = cards.find((c) => c.isAlbum && c.creator === "가수");
+check("같은 앨범+같은 가수는 한 카드 (대소문자 무시)", () => assert.deepEqual(albumA.items.map((i) => i.id), ["s2", "s1", "s3"]));
+check("가수가 다르면 다른 카드", () => assert.ok(cards.some((c) => c.isAlbum && c.items[0].id === "s4")));
+check("앨범 칸이 빈 노래는 각각 카드", () => assert.equal(cards.filter((c) => !c.isAlbum && c.kind === "노래").length, 2));
+check("책은 앨범 칸이 있어도 안 묶인다", () => assert.ok(cards.some((c) => c.key === "b1" && !c.isAlbum)));
+check("앨범 카드 표지는 사진 있는 곡", () => assert.equal(albumA.coverId, "s2"));
+check("앨범 카드 날짜는 가장 최근 곡", () => assert.equal(albumA.date, "2026-05-01"));
+check("앨범 카드는 가장 최근 곡 자리에", () => assert.deepEqual(cards.map((c) => c.key.startsWith("album") ? "A:" + c.creator : c.key), ["s5", "A:가수", "b1", "A:다른 가수", "s6"]));
+check("평균 별점 (빈 별점 제외)", () => assert.equal(averageRating(albumA.items), 4.5));
+check("별점이 하나도 없으면 null", () => assert.equal(averageRating([{ rating: null }]), null));
+check("노래 수는 곡 단위로 센다", () => assert.equal(countYear(songs, 2026).노래, 6));
 check("한국 시간 연말 경계", () => assert.equal(seoulYear(new Date("2026-12-31T15:30:00Z")), 2027));
 check("한국 시간 연초", () => assert.equal(seoulYear(new Date("2026-12-31T14:30:00Z")), 2026));
 

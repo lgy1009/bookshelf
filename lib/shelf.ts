@@ -3,10 +3,10 @@
 import "server-only";
 import { cacheLife } from "next/cache";
 import { findShelfDatabase, NotionMissingToken, queryPublic } from "./notion";
-import { countYear, seoulYear, toShelfItems, type ShelfItem } from "./transform";
+import { countYear, seoulYear, toShelfItems, type Kind, type ShelfItem } from "./transform";
 
 export type Shelf =
-  | { ok: true; items: ShelfItem[]; year: number; count: { books: number; movies: number } }
+  | { ok: true; items: ShelfItem[]; year: number; count: Record<Kind, number> }
   | { ok: false; reason: "no-token" | "no-database" | "error" };
 
 async function loadShelf(): Promise<Shelf> {

@@ -29,9 +29,9 @@ const pretendard = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "나의 책장",
-  description: "읽은 책과 본 영화를 꽂아 두는 작은 책장",
-  openGraph: { title: "나의 책장", type: "website", locale: "ko_KR" },
+  title: "Archive · 나의 문화생활 기록",
+  description: "읽고 보고 듣고 다녀온 것들",
+  openGraph: { title: "Archive · 나의 문화생활 기록", type: "website", locale: "ko_KR" },
   robots: { index: false, follow: false }, // 개인 사이트라 검색엔진에 올리지 않는다
 };
 

@@ -7,7 +7,7 @@ const API = "https://api.notion.com/v1";
 const VERSION = "2022-06-28";
 
 // 노션에서 이 이름과 똑같은 표를 찾는다. (DESIGN §3)
-export const DB_TITLE = "책·영화";
+export const DB_TITLE = "문화생활";
 
 // 노션 페이지(= 표의 한 줄). 열 값은 노션 원본 모양 그대로 둔다.
 export type NotionPage = {
@@ -47,7 +47,7 @@ export function notionGet<T>(path: string): Promise<T> {
   return notion<T>(path);
 }
 
-// 연결이 볼 수 있는 표 중 이름이 「책·영화」인 것의 ID (없으면 null)
+// 연결이 볼 수 있는 표 중 이름이 「문화생활」인 것의 ID (없으면 null)
 export async function findShelfDatabase(): Promise<string | null> {
   const data = await notion<{ results: { id: string; title?: { plain_text: string }[] }[] }>("/search", {
     query: DB_TITLE,
