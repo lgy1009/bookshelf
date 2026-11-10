@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+# 로컬 작업 폴더 (배포·검사 대상이 아님)
+.bkit/
+.claude/
+trash-can/
+.env.local

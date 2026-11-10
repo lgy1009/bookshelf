@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📚 나의 책장
 
-## Getting Started
+노션에 적은 "읽은 책·본 영화" 기록을 표지가 꽂힌 레트로 책장처럼 보여 주는 개인 홈페이지입니다.
 
-First, run the development server:
+- 노션 「책·영화」 표에서 **공개**로 체크한 것만 책장에 꽂힙니다.
+- 종류(책/영화)·별점·연도로 골라 볼 수 있고, 표지를 누르면 한 줄 감상이 열립니다.
+- 맨 위에 "올해 읽은 책 ○권 · 본 영화 ○편"이 나옵니다. (한국 시간 기준, 다 본 날로 셈)
+- 노션 사진 주소는 약 1시간 뒤 만료되므로, `/api/image?id=…` 경로가 매번 노션에서 새 주소를 받아 이동시킵니다.
+
+기술: Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Vercel. 노션은 공식 REST API를 `fetch`로 직접 부릅니다.
+문서: [PRD.md](PRD.md) · [PLAN.md](PLAN.md) · [DESIGN.md](DESIGN.md)
+
+## 노션 표 「책·영화」
+
+| 열 | 형식 | 설명 |
+|---|---|---|
+| 제목 | 제목 | |
+| 종류 | 선택 | 책 / 영화 |
+| 별점 | 숫자 | 1~5 |
+| 한 줄 감상 | 텍스트 | |
+| 다 본 날 | 날짜 | 연도 골라 보기·올해 숫자에 쓰임 |
+| 표지 사진 | 파일 | 첫 장만 씀 |
+| 공개 | 체크박스 | 체크한 것만 사이트에 보임 |
+
+## 노션 연결하기 (읽기 전용)
+
+1. https://www.notion.so/profile/integrations 에서 **새 연결(New integration)** 을 만듭니다.
+   - 종류: 내부(Internal) · 이름: 예) `나의 책장 사이트`
+   - **기능(Capabilities)** 에서 「콘텐츠 읽기」만 켜고, 「콘텐츠 업데이트」「콘텐츠 입력」「댓글」「사용자 정보」는 모두 끕니다.
+2. 만든 연결의 **내부 통합 시크릿(토큰)** 을 복사해 프로젝트 폴더의 `.env`에 `NOTION_TOKEN=복사한값` 으로 넣습니다. (채팅에 붙여 넣지 마세요)
+3. 노션에서 「나의 책장」 페이지 → 오른쪽 위 `•••` → **연결(Connections)** → 방금 만든 연결을 추가합니다.
+
+## 실행
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm.cmd install
+npm.cmd run dev
+npm.cmd run test:transform
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
